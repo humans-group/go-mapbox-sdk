@@ -16,7 +16,8 @@ type (
 	}
 
 	Properties struct {
-		Accuracy string `json:"accuracy"`
+		Accuracy  string `json:"accuracy"`
+		ShortCode string `json:"short_code"`
 	}
 
 	Geometry struct {

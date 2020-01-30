@@ -38,6 +38,8 @@ func easyjson3e8ab7adDecodeGithubComHumansNetMapboxSdkGoMapbox(in *jlexer.Lexer,
 		switch key {
 		case "accuracy":
 			out.Accuracy = string(in.String())
+		case "short_code":
+			out.ShortCode = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -56,6 +58,11 @@ func easyjson3e8ab7adEncodeGithubComHumansNetMapboxSdkGoMapbox(out *jwriter.Writ
 		const prefix string = ",\"accuracy\":"
 		out.RawString(prefix[1:])
 		out.String(string(in.Accuracy))
+	}
+	{
+		const prefix string = ",\"short_code\":"
+		out.RawString(prefix)
+		out.String(string(in.ShortCode))
 	}
 	out.RawByte('}')
 }
