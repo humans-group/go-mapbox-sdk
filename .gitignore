@@ -13,3 +13,9 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# local integration tests
+mapbox/test_test.go
+
+# Goland
+.idea
