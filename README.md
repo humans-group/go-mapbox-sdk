@@ -1,6 +1,6 @@
 # mapbox-sdk-go
 
-![Go](https://github.com/humans-net/mapbox-sdk-go/workflows/Go/badge.svg?branch=master&event=push)
+![CI](https://github.com/humans-net/mapbox-sdk-go/workflows/CI/badge.svg)
 
 A Golang client for Mapbox web services
 

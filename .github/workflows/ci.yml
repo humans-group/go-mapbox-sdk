@@ -1,13 +1,14 @@
-name: Go
+name: CI
 on: [push, pull_request]
 jobs:
   build:
     name: Build
-    strategy:
-      matrix:
-        go-version: [1.13.x]
-        platform: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.platform }}
+#    strategy:
+#      matrix:
+#        go-version: [1.13.x]
+#        platform: [, macos-latest, windows-latest]
+#    runs-on: ${{ matrix.platform }}
+    runs-on: ubuntu-latest
     steps:
 
     - name: Set up Go 1.13
