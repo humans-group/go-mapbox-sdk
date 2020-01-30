@@ -245,7 +245,7 @@ func easyjson3e8ab7adDecodeGithubComHumansNetMapboxSdkGoMapbox2(in *jlexer.Lexer
 			out.Relevance = int(in.Int())
 		case "properties":
 			(out.Properties).UnmarshalEasyJSON(in)
-		case "Text":
+		case "text":
 			out.Text = string(in.String())
 		case "place_name":
 			out.PlaceName = string(in.String())
@@ -350,7 +350,7 @@ func easyjson3e8ab7adEncodeGithubComHumansNetMapboxSdkGoMapbox2(out *jwriter.Wri
 		(in.Properties).MarshalEasyJSON(out)
 	}
 	{
-		const prefix string = ",\"Text\":"
+		const prefix string = ",\"text\":"
 		out.RawString(prefix)
 		out.String(string(in.Text))
 	}
