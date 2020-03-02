@@ -2,17 +2,18 @@ package mapbox
 
 type (
 	Feature struct {
-		ID         string     `json:"id"`
-		Type       string     `json:"type"`
-		PlaceType  []string   `json:"place_type"`
-		Relevance  int        `json:"relevance"`
-		Properties Properties `json:"properties"`
-		Text       string     `json:"text"`
-		PlaceName  string     `json:"place_name"`
-		Center     []float64  `json:"center"`
-		Geometry   Geometry   `json:"geometry"`
-		Address    string     `json:"address"`
-		Context    []Context  `json:"context"`
+		ID          string     `json:"id"`
+		Type        string     `json:"type"`
+		PlaceType   []string   `json:"place_type"`
+		Relevance   int        `json:"relevance"`
+		Properties  Properties `json:"properties"`
+		Text        string     `json:"text"`
+		PlaceName   string     `json:"place_name"`
+		Center      []float64  `json:"center"`
+		Geometry    Geometry   `json:"geometry"`
+		Address     string     `json:"address"`
+		Context     []Context  `json:"context"`
+		BoundingBox []float64  `json:"bbox"`
 	}
 
 	Properties struct {

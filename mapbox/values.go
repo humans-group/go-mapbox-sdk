@@ -1,33 +1,33 @@
 package mapbox
 
 import (
-	"strings"
+	"bytes"
 )
 
 const (
 	slash         = "/"
-	comma         = ","
+	comma         = ','
 	questionMark  = "?"
-	equalMark     = "="
-	ampersandMark = "&"
+	equalMark     = '='
+	ampersandMark = '&'
 )
 
-func encodeValues(buf *strings.Builder, values map[string]string, valuesMulti map[string][]string) {
+// encodeValues do almost the same as url.Values.Encode() but faster and reuses *strings.Builder
+func encodeValues(buf *bytes.Buffer, values map[string]string, valuesMulti map[string][]string) {
 	for k, v := range values {
-		buf.WriteString(ampersandMark)
-
-		buf.WriteString(k)
-		buf.WriteString(equalMark)
-		buf.WriteString(v)
+		encodeHttpGetKeyValue(buf, k, v)
 	}
 
 	for k, vs := range valuesMulti {
 		for _, v := range vs {
-			buf.WriteString(ampersandMark)
-
-			buf.WriteString(k)
-			buf.WriteString(equalMark)
-			buf.WriteString(v)
+			encodeHttpGetKeyValue(buf, k, v)
 		}
 	}
+}
+
+func encodeHttpGetKeyValue(buf *bytes.Buffer, k string, v string) {
+	buf.WriteByte(ampersandMark)
+	buf.WriteString(k)
+	buf.WriteByte(equalMark)
+	buf.WriteString(v)
 }

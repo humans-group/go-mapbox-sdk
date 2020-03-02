@@ -19,3 +19,6 @@ mapbox/test_test.go
 
 # Goland
 .idea
+
+# test coverage
+coverage.txt

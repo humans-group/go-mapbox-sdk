@@ -9,6 +9,7 @@ type Logger interface {
 	Errorf(msg string, params ...interface{})
 }
 
+// withLogger helps to reduce unnecessary allocations
 func (c *config) withLogger(ctx context.Context, do func(Logger)) {
 	if c.requestLogger != nil  {
 		do(c.requestLogger(ctx))

@@ -20,16 +20,18 @@ const (
 	trueStr     = "true"
 	oneStr      = "1"
 
-	responseFormatJSON = ".json"
-	access_token       = "access_token"
-
-	getMethod = "GET"
+	access_token = "access_token"
 
 	floatFormatNoExponent = 'f'
 
 	respHeaderRateLimitInterval = "X-Rate-Limit-Interval"
 	respHeaderRateLimitLimit    = "X-Rate-Limit-Limit"
 	respHeaderRateLimitReset    = "X-Rate-Limit-Reset"
+)
+
+var (
+	responseFormatJSON = []byte(".json")
+	getMethod          = []byte("GET")
 )
 
 type GeoPoint struct {
@@ -71,38 +73,48 @@ type ReverseGeocodeRequest struct {
 	Routing bool
 }
 
+// RateLimit wraps mapbox API rate limit resp headers
 type RateLimit struct {
-	Interval string
-	Limit    string
-	Reset    string
+	Interval []byte
+	Limit    []byte
+	Reset    []byte
 }
 
-//easyjson:json
+// easyjson:json
 type rawReverseGeoResp struct {
 	Features []Feature `json:"features"`
 	Query    []float64 `json:"query"`
 }
 
+// ReverseGeocodeResponse
 type ReverseGeocodeResponse struct {
 	RateLimit RateLimit
-	RawResp   []byte
-	Query     GeoPoint
-	Type      string
-	Features  []Feature
+	// Raw mapbox API response
+	RawResp []byte
+	// passed query to mapbox
+	Query GeoPoint
+	// response result type
+	Type string
+	// response data
+	Features []Feature
 }
 
+// Geocoder encapsulates forward and reverse geocode calls.
 type Geocoder interface {
+	// ReverseGeocode calls geocode/v5 reverse mapbox API
 	ReverseGeocode(ctx context.Context, req *ReverseGeocodeRequest) (*ReverseGeocodeResponse, error)
 }
 
+// FastHttpGeocoder is a fasthttp Geocoder implementation
 type FastHttpGeocoder struct {
 	config
 
-	geocodeAPIURL string
+	geocodeAPIURL []byte
 
 	stringBufPull *stringsBufferPool
 }
 
+// ReverseGeocode calls geocode/v5 reverse mapbox API thought fasthttp client.
 func (c *FastHttpGeocoder) ReverseGeocode(ctx context.Context, req *ReverseGeocodeRequest) (*ReverseGeocodeResponse, error) {
 	freq := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(freq)
@@ -110,7 +122,8 @@ func (c *FastHttpGeocoder) ReverseGeocode(ctx context.Context, req *ReverseGeoco
 	fresp := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(fresp)
 
-	values := map[string]string{}
+	// split multivalues to limit memory consumption
+	values := make(map[string]string, 5)
 	var valuesMulti map[string][]string
 
 	if req.Country != "" {
@@ -143,23 +156,23 @@ func (c *FastHttpGeocoder) ReverseGeocode(ctx context.Context, req *ReverseGeoco
 	buf := c.stringBufPull.acquireStringsBuilder()
 	defer c.stringBufPull.releaseStringsBuilder(buf)
 
-	buf.WriteString(c.geocodeAPIURL)
+	buf.Write(c.geocodeAPIURL)
 	buf.WriteString(strconv.FormatFloat(req.GeoPoint.Lon, floatFormatNoExponent, 6, 64))
-	buf.WriteString(comma)
+	buf.WriteByte(comma)
 	buf.WriteString(strconv.FormatFloat(req.GeoPoint.Lat, floatFormatNoExponent, 6, 64))
-	buf.WriteString(responseFormatJSON)
-	buf.WriteString(c.accessTokenGetValue)
+	buf.Write(responseFormatJSON)
+	buf.Write(c.accessTokenGetValue)
 
 	encodeValues(buf, values, valuesMulti)
 
-	reqURI := buf.String()
+	reqURI := buf.Bytes()
 
 	c.withLogger(ctx, func(logger Logger) {
-		logger.Debugf("mapbox_sdk: reverse geocode request %s", reqURI)
+		logger.Debugf("mapbox_sdk: reverse geocode request %s", buf.String())
 	})
 
-	freq.Header.SetMethod(getMethod)
-	freq.SetRequestURI(reqURI)
+	freq.Header.SetMethodBytes(getMethod)
+	freq.SetRequestURIBytes(reqURI)
 
 	if err := c.client.Do(freq, fresp); err != nil {
 		return nil, err
@@ -167,6 +180,10 @@ func (c *FastHttpGeocoder) ReverseGeocode(ctx context.Context, req *ReverseGeoco
 
 	respBytes := make([]byte, len(fresp.Body()))
 	copy(respBytes, fresp.Body())
+
+	c.withLogger(ctx, func(logger Logger) {
+		logger.Debugf("mapbox_sdk: reverse geocode response %s", string(respBytes))
+	})
 
 	if fresp.Header.StatusCode() != http.StatusOK {
 		return nil, errors.Errorf("failed to reverse geocode URI %s statusCode %d resp %s",
@@ -197,7 +214,7 @@ func NewFastHttpGeocoder(opts ...Option) *FastHttpGeocoder {
 	c := FastHttpGeocoder{
 		config:        newConfig(),
 		stringBufPull: newStringsBufferPool(),
-		geocodeAPIURL: "/geocoding/v5/",
+		geocodeAPIURL: []byte("/geocoding/v5/"),
 	}
 
 	for _, o := range opts {
@@ -207,15 +224,15 @@ func NewFastHttpGeocoder(opts ...Option) *FastHttpGeocoder {
 	c.config = c.config.withEnv()
 	c.config = c.config.prepare()
 
-	c.geocodeAPIURL = c.rootAPI + c.geocodeAPIURL + c.geocodeEndpoint + slash
+	c.geocodeAPIURL = []byte(c.rootAPI + string(c.geocodeAPIURL) + c.geocodeEndpoint + slash)
 
 	return &c
 }
 
 func readRespRateLimit(resp *fasthttp.Response) RateLimit {
 	return RateLimit{
-		Interval: string(resp.Header.Peek(respHeaderRateLimitInterval)),
-		Limit:    string(resp.Header.Peek(respHeaderRateLimitLimit)),
-		Reset:    string(resp.Header.Peek(respHeaderRateLimitReset)),
+		Interval: resp.Header.Peek(respHeaderRateLimitInterval),
+		Limit:    resp.Header.Peek(respHeaderRateLimitLimit),
+		Reset:    resp.Header.Peek(respHeaderRateLimitReset),
 	}
 }
