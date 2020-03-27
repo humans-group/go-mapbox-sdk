@@ -9,5 +9,6 @@ The Mapbox Golang SDK is a Resource API which methods return objects containing 
 ## Services
  - **Geocoding V5**
     - Reverse (longitude, latitude ⇢ place names)
+    - Forward (search text ⇢ place names)
 
 SDK is under development and API could change before __v1.0.0__ release.

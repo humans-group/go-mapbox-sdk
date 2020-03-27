@@ -154,3 +154,140 @@ func (v *rawReverseGeoResp) UnmarshalJSON(data []byte) error {
 func (v *rawReverseGeoResp) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson46e924aeDecodeGithubComHumansNetMapboxSdkGoMapbox(l, v)
 }
+func easyjson46e924aeDecodeGithubComHumansNetMapboxSdkGoMapbox1(in *jlexer.Lexer, out *rawForwardGeoResp) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeString()
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "features":
+			if in.IsNull() {
+				in.Skip()
+				out.Features = nil
+			} else {
+				in.Delim('[')
+				if out.Features == nil {
+					if !in.IsDelim(']') {
+						out.Features = make([]Feature, 0, 1)
+					} else {
+						out.Features = []Feature{}
+					}
+				} else {
+					out.Features = (out.Features)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v7 Feature
+					(v7).UnmarshalEasyJSON(in)
+					out.Features = append(out.Features, v7)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "query":
+			if in.IsNull() {
+				in.Skip()
+				out.Query = nil
+			} else {
+				in.Delim('[')
+				if out.Query == nil {
+					if !in.IsDelim(']') {
+						out.Query = make([]string, 0, 4)
+					} else {
+						out.Query = []string{}
+					}
+				} else {
+					out.Query = (out.Query)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v8 string
+					v8 = string(in.String())
+					out.Query = append(out.Query, v8)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson46e924aeEncodeGithubComHumansNetMapboxSdkGoMapbox1(out *jwriter.Writer, in rawForwardGeoResp) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"features\":"
+		out.RawString(prefix[1:])
+		if in.Features == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v9, v10 := range in.Features {
+				if v9 > 0 {
+					out.RawByte(',')
+				}
+				(v10).MarshalEasyJSON(out)
+			}
+			out.RawByte(']')
+		}
+	}
+	{
+		const prefix string = ",\"query\":"
+		out.RawString(prefix)
+		if in.Query == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v11, v12 := range in.Query {
+				if v11 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v12))
+			}
+			out.RawByte(']')
+		}
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v rawForwardGeoResp) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson46e924aeEncodeGithubComHumansNetMapboxSdkGoMapbox1(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v rawForwardGeoResp) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson46e924aeEncodeGithubComHumansNetMapboxSdkGoMapbox1(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *rawForwardGeoResp) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson46e924aeDecodeGithubComHumansNetMapboxSdkGoMapbox1(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *rawForwardGeoResp) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson46e924aeDecodeGithubComHumansNetMapboxSdkGoMapbox1(l, v)
+}

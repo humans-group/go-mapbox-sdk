@@ -15,7 +15,7 @@ func (_ *fastHttpClient) Do(req *fasthttp.Request, resp *fasthttp.Response) erro
 	return nil
 }
 
-var resp1 *ReverseGeocodeResponse
+var resp1 *GeocodeResponse
 
 func Benchmark_Geocoder(b *testing.B) {
 	g := NewFastHttpGeocoder(HttpClient(&fastHttpClient{}))

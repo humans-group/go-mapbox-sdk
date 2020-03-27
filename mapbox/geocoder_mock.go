@@ -15,7 +15,13 @@ import (
 type GeocoderMock struct {
 	t minimock.Tester
 
-	funcReverseGeocode          func(ctx context.Context, req *ReverseGeocodeRequest) (rp1 *ReverseGeocodeResponse, err error)
+	funcForwardGeocode          func(ctx context.Context, req *ForwardGeocodeRequest) (gp1 *GeocodeResponse, err error)
+	inspectFuncForwardGeocode   func(ctx context.Context, req *ForwardGeocodeRequest)
+	afterForwardGeocodeCounter  uint64
+	beforeForwardGeocodeCounter uint64
+	ForwardGeocodeMock          mGeocoderMockForwardGeocode
+
+	funcReverseGeocode          func(ctx context.Context, req *ReverseGeocodeRequest) (gp1 *GeocodeResponse, err error)
 	inspectFuncReverseGeocode   func(ctx context.Context, req *ReverseGeocodeRequest)
 	afterReverseGeocodeCounter  uint64
 	beforeReverseGeocodeCounter uint64
@@ -29,10 +35,230 @@ func NewGeocoderMock(t minimock.Tester) *GeocoderMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.ForwardGeocodeMock = mGeocoderMockForwardGeocode{mock: m}
+	m.ForwardGeocodeMock.callArgs = []*GeocoderMockForwardGeocodeParams{}
+
 	m.ReverseGeocodeMock = mGeocoderMockReverseGeocode{mock: m}
 	m.ReverseGeocodeMock.callArgs = []*GeocoderMockReverseGeocodeParams{}
 
 	return m
+}
+
+type mGeocoderMockForwardGeocode struct {
+	mock               *GeocoderMock
+	defaultExpectation *GeocoderMockForwardGeocodeExpectation
+	expectations       []*GeocoderMockForwardGeocodeExpectation
+
+	callArgs []*GeocoderMockForwardGeocodeParams
+	mutex    sync.RWMutex
+}
+
+// GeocoderMockForwardGeocodeExpectation specifies expectation struct of the Geocoder.ForwardGeocode
+type GeocoderMockForwardGeocodeExpectation struct {
+	mock    *GeocoderMock
+	params  *GeocoderMockForwardGeocodeParams
+	results *GeocoderMockForwardGeocodeResults
+	Counter uint64
+}
+
+// GeocoderMockForwardGeocodeParams contains parameters of the Geocoder.ForwardGeocode
+type GeocoderMockForwardGeocodeParams struct {
+	ctx context.Context
+	req *ForwardGeocodeRequest
+}
+
+// GeocoderMockForwardGeocodeResults contains results of the Geocoder.ForwardGeocode
+type GeocoderMockForwardGeocodeResults struct {
+	gp1 *GeocodeResponse
+	err error
+}
+
+// Expect sets up expected params for Geocoder.ForwardGeocode
+func (mmForwardGeocode *mGeocoderMockForwardGeocode) Expect(ctx context.Context, req *ForwardGeocodeRequest) *mGeocoderMockForwardGeocode {
+	if mmForwardGeocode.mock.funcForwardGeocode != nil {
+		mmForwardGeocode.mock.t.Fatalf("GeocoderMock.ForwardGeocode mock is already set by Set")
+	}
+
+	if mmForwardGeocode.defaultExpectation == nil {
+		mmForwardGeocode.defaultExpectation = &GeocoderMockForwardGeocodeExpectation{}
+	}
+
+	mmForwardGeocode.defaultExpectation.params = &GeocoderMockForwardGeocodeParams{ctx, req}
+	for _, e := range mmForwardGeocode.expectations {
+		if minimock.Equal(e.params, mmForwardGeocode.defaultExpectation.params) {
+			mmForwardGeocode.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmForwardGeocode.defaultExpectation.params)
+		}
+	}
+
+	return mmForwardGeocode
+}
+
+// Inspect accepts an inspector function that has same arguments as the Geocoder.ForwardGeocode
+func (mmForwardGeocode *mGeocoderMockForwardGeocode) Inspect(f func(ctx context.Context, req *ForwardGeocodeRequest)) *mGeocoderMockForwardGeocode {
+	if mmForwardGeocode.mock.inspectFuncForwardGeocode != nil {
+		mmForwardGeocode.mock.t.Fatalf("Inspect function is already set for GeocoderMock.ForwardGeocode")
+	}
+
+	mmForwardGeocode.mock.inspectFuncForwardGeocode = f
+
+	return mmForwardGeocode
+}
+
+// Return sets up results that will be returned by Geocoder.ForwardGeocode
+func (mmForwardGeocode *mGeocoderMockForwardGeocode) Return(gp1 *GeocodeResponse, err error) *GeocoderMock {
+	if mmForwardGeocode.mock.funcForwardGeocode != nil {
+		mmForwardGeocode.mock.t.Fatalf("GeocoderMock.ForwardGeocode mock is already set by Set")
+	}
+
+	if mmForwardGeocode.defaultExpectation == nil {
+		mmForwardGeocode.defaultExpectation = &GeocoderMockForwardGeocodeExpectation{mock: mmForwardGeocode.mock}
+	}
+	mmForwardGeocode.defaultExpectation.results = &GeocoderMockForwardGeocodeResults{gp1, err}
+	return mmForwardGeocode.mock
+}
+
+//Set uses given function f to mock the Geocoder.ForwardGeocode method
+func (mmForwardGeocode *mGeocoderMockForwardGeocode) Set(f func(ctx context.Context, req *ForwardGeocodeRequest) (gp1 *GeocodeResponse, err error)) *GeocoderMock {
+	if mmForwardGeocode.defaultExpectation != nil {
+		mmForwardGeocode.mock.t.Fatalf("Default expectation is already set for the Geocoder.ForwardGeocode method")
+	}
+
+	if len(mmForwardGeocode.expectations) > 0 {
+		mmForwardGeocode.mock.t.Fatalf("Some expectations are already set for the Geocoder.ForwardGeocode method")
+	}
+
+	mmForwardGeocode.mock.funcForwardGeocode = f
+	return mmForwardGeocode.mock
+}
+
+// When sets expectation for the Geocoder.ForwardGeocode which will trigger the result defined by the following
+// Then helper
+func (mmForwardGeocode *mGeocoderMockForwardGeocode) When(ctx context.Context, req *ForwardGeocodeRequest) *GeocoderMockForwardGeocodeExpectation {
+	if mmForwardGeocode.mock.funcForwardGeocode != nil {
+		mmForwardGeocode.mock.t.Fatalf("GeocoderMock.ForwardGeocode mock is already set by Set")
+	}
+
+	expectation := &GeocoderMockForwardGeocodeExpectation{
+		mock:   mmForwardGeocode.mock,
+		params: &GeocoderMockForwardGeocodeParams{ctx, req},
+	}
+	mmForwardGeocode.expectations = append(mmForwardGeocode.expectations, expectation)
+	return expectation
+}
+
+// Then sets up Geocoder.ForwardGeocode return parameters for the expectation previously defined by the When method
+func (e *GeocoderMockForwardGeocodeExpectation) Then(gp1 *GeocodeResponse, err error) *GeocoderMock {
+	e.results = &GeocoderMockForwardGeocodeResults{gp1, err}
+	return e.mock
+}
+
+// ForwardGeocode implements Geocoder
+func (mmForwardGeocode *GeocoderMock) ForwardGeocode(ctx context.Context, req *ForwardGeocodeRequest) (gp1 *GeocodeResponse, err error) {
+	mm_atomic.AddUint64(&mmForwardGeocode.beforeForwardGeocodeCounter, 1)
+	defer mm_atomic.AddUint64(&mmForwardGeocode.afterForwardGeocodeCounter, 1)
+
+	if mmForwardGeocode.inspectFuncForwardGeocode != nil {
+		mmForwardGeocode.inspectFuncForwardGeocode(ctx, req)
+	}
+
+	mm_params := &GeocoderMockForwardGeocodeParams{ctx, req}
+
+	// Record call args
+	mmForwardGeocode.ForwardGeocodeMock.mutex.Lock()
+	mmForwardGeocode.ForwardGeocodeMock.callArgs = append(mmForwardGeocode.ForwardGeocodeMock.callArgs, mm_params)
+	mmForwardGeocode.ForwardGeocodeMock.mutex.Unlock()
+
+	for _, e := range mmForwardGeocode.ForwardGeocodeMock.expectations {
+		if minimock.Equal(e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.gp1, e.results.err
+		}
+	}
+
+	if mmForwardGeocode.ForwardGeocodeMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmForwardGeocode.ForwardGeocodeMock.defaultExpectation.Counter, 1)
+		mm_want := mmForwardGeocode.ForwardGeocodeMock.defaultExpectation.params
+		mm_got := GeocoderMockForwardGeocodeParams{ctx, req}
+		if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmForwardGeocode.t.Errorf("GeocoderMock.ForwardGeocode got unexpected parameters, want: %#v, got: %#v%s\n", *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmForwardGeocode.ForwardGeocodeMock.defaultExpectation.results
+		if mm_results == nil {
+			mmForwardGeocode.t.Fatal("No results are set for the GeocoderMock.ForwardGeocode")
+		}
+		return (*mm_results).gp1, (*mm_results).err
+	}
+	if mmForwardGeocode.funcForwardGeocode != nil {
+		return mmForwardGeocode.funcForwardGeocode(ctx, req)
+	}
+	mmForwardGeocode.t.Fatalf("Unexpected call to GeocoderMock.ForwardGeocode. %v %v", ctx, req)
+	return
+}
+
+// ForwardGeocodeAfterCounter returns a count of finished GeocoderMock.ForwardGeocode invocations
+func (mmForwardGeocode *GeocoderMock) ForwardGeocodeAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmForwardGeocode.afterForwardGeocodeCounter)
+}
+
+// ForwardGeocodeBeforeCounter returns a count of GeocoderMock.ForwardGeocode invocations
+func (mmForwardGeocode *GeocoderMock) ForwardGeocodeBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmForwardGeocode.beforeForwardGeocodeCounter)
+}
+
+// Calls returns a list of arguments used in each call to GeocoderMock.ForwardGeocode.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmForwardGeocode *mGeocoderMockForwardGeocode) Calls() []*GeocoderMockForwardGeocodeParams {
+	mmForwardGeocode.mutex.RLock()
+
+	argCopy := make([]*GeocoderMockForwardGeocodeParams, len(mmForwardGeocode.callArgs))
+	copy(argCopy, mmForwardGeocode.callArgs)
+
+	mmForwardGeocode.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockForwardGeocodeDone returns true if the count of the ForwardGeocode invocations corresponds
+// the number of defined expectations
+func (m *GeocoderMock) MinimockForwardGeocodeDone() bool {
+	for _, e := range m.ForwardGeocodeMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.ForwardGeocodeMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterForwardGeocodeCounter) < 1 {
+		return false
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcForwardGeocode != nil && mm_atomic.LoadUint64(&m.afterForwardGeocodeCounter) < 1 {
+		return false
+	}
+	return true
+}
+
+// MinimockForwardGeocodeInspect logs each unmet expectation
+func (m *GeocoderMock) MinimockForwardGeocodeInspect() {
+	for _, e := range m.ForwardGeocodeMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to GeocoderMock.ForwardGeocode with params: %#v", *e.params)
+		}
+	}
+
+	// if default expectation was set then invocations count should be greater than zero
+	if m.ForwardGeocodeMock.defaultExpectation != nil && mm_atomic.LoadUint64(&m.afterForwardGeocodeCounter) < 1 {
+		if m.ForwardGeocodeMock.defaultExpectation.params == nil {
+			m.t.Error("Expected call to GeocoderMock.ForwardGeocode")
+		} else {
+			m.t.Errorf("Expected call to GeocoderMock.ForwardGeocode with params: %#v", *m.ForwardGeocodeMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcForwardGeocode != nil && mm_atomic.LoadUint64(&m.afterForwardGeocodeCounter) < 1 {
+		m.t.Error("Expected call to GeocoderMock.ForwardGeocode")
+	}
 }
 
 type mGeocoderMockReverseGeocode struct {
@@ -60,7 +286,7 @@ type GeocoderMockReverseGeocodeParams struct {
 
 // GeocoderMockReverseGeocodeResults contains results of the Geocoder.ReverseGeocode
 type GeocoderMockReverseGeocodeResults struct {
-	rp1 *ReverseGeocodeResponse
+	gp1 *GeocodeResponse
 	err error
 }
 
@@ -96,7 +322,7 @@ func (mmReverseGeocode *mGeocoderMockReverseGeocode) Inspect(f func(ctx context.
 }
 
 // Return sets up results that will be returned by Geocoder.ReverseGeocode
-func (mmReverseGeocode *mGeocoderMockReverseGeocode) Return(rp1 *ReverseGeocodeResponse, err error) *GeocoderMock {
+func (mmReverseGeocode *mGeocoderMockReverseGeocode) Return(gp1 *GeocodeResponse, err error) *GeocoderMock {
 	if mmReverseGeocode.mock.funcReverseGeocode != nil {
 		mmReverseGeocode.mock.t.Fatalf("GeocoderMock.ReverseGeocode mock is already set by Set")
 	}
@@ -104,12 +330,12 @@ func (mmReverseGeocode *mGeocoderMockReverseGeocode) Return(rp1 *ReverseGeocodeR
 	if mmReverseGeocode.defaultExpectation == nil {
 		mmReverseGeocode.defaultExpectation = &GeocoderMockReverseGeocodeExpectation{mock: mmReverseGeocode.mock}
 	}
-	mmReverseGeocode.defaultExpectation.results = &GeocoderMockReverseGeocodeResults{rp1, err}
+	mmReverseGeocode.defaultExpectation.results = &GeocoderMockReverseGeocodeResults{gp1, err}
 	return mmReverseGeocode.mock
 }
 
 //Set uses given function f to mock the Geocoder.ReverseGeocode method
-func (mmReverseGeocode *mGeocoderMockReverseGeocode) Set(f func(ctx context.Context, req *ReverseGeocodeRequest) (rp1 *ReverseGeocodeResponse, err error)) *GeocoderMock {
+func (mmReverseGeocode *mGeocoderMockReverseGeocode) Set(f func(ctx context.Context, req *ReverseGeocodeRequest) (gp1 *GeocodeResponse, err error)) *GeocoderMock {
 	if mmReverseGeocode.defaultExpectation != nil {
 		mmReverseGeocode.mock.t.Fatalf("Default expectation is already set for the Geocoder.ReverseGeocode method")
 	}
@@ -138,13 +364,13 @@ func (mmReverseGeocode *mGeocoderMockReverseGeocode) When(ctx context.Context, r
 }
 
 // Then sets up Geocoder.ReverseGeocode return parameters for the expectation previously defined by the When method
-func (e *GeocoderMockReverseGeocodeExpectation) Then(rp1 *ReverseGeocodeResponse, err error) *GeocoderMock {
-	e.results = &GeocoderMockReverseGeocodeResults{rp1, err}
+func (e *GeocoderMockReverseGeocodeExpectation) Then(gp1 *GeocodeResponse, err error) *GeocoderMock {
+	e.results = &GeocoderMockReverseGeocodeResults{gp1, err}
 	return e.mock
 }
 
 // ReverseGeocode implements Geocoder
-func (mmReverseGeocode *GeocoderMock) ReverseGeocode(ctx context.Context, req *ReverseGeocodeRequest) (rp1 *ReverseGeocodeResponse, err error) {
+func (mmReverseGeocode *GeocoderMock) ReverseGeocode(ctx context.Context, req *ReverseGeocodeRequest) (gp1 *GeocodeResponse, err error) {
 	mm_atomic.AddUint64(&mmReverseGeocode.beforeReverseGeocodeCounter, 1)
 	defer mm_atomic.AddUint64(&mmReverseGeocode.afterReverseGeocodeCounter, 1)
 
@@ -162,7 +388,7 @@ func (mmReverseGeocode *GeocoderMock) ReverseGeocode(ctx context.Context, req *R
 	for _, e := range mmReverseGeocode.ReverseGeocodeMock.expectations {
 		if minimock.Equal(e.params, mm_params) {
 			mm_atomic.AddUint64(&e.Counter, 1)
-			return e.results.rp1, e.results.err
+			return e.results.gp1, e.results.err
 		}
 	}
 
@@ -178,7 +404,7 @@ func (mmReverseGeocode *GeocoderMock) ReverseGeocode(ctx context.Context, req *R
 		if mm_results == nil {
 			mmReverseGeocode.t.Fatal("No results are set for the GeocoderMock.ReverseGeocode")
 		}
-		return (*mm_results).rp1, (*mm_results).err
+		return (*mm_results).gp1, (*mm_results).err
 	}
 	if mmReverseGeocode.funcReverseGeocode != nil {
 		return mmReverseGeocode.funcReverseGeocode(ctx, req)
@@ -255,6 +481,8 @@ func (m *GeocoderMock) MinimockReverseGeocodeInspect() {
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *GeocoderMock) MinimockFinish() {
 	if !m.minimockDone() {
+		m.MinimockForwardGeocodeInspect()
+
 		m.MinimockReverseGeocodeInspect()
 		m.t.FailNow()
 	}
@@ -279,5 +507,6 @@ func (m *GeocoderMock) MinimockWait(timeout mm_time.Duration) {
 func (m *GeocoderMock) minimockDone() bool {
 	done := true
 	return done &&
+		m.MinimockForwardGeocodeDone() &&
 		m.MinimockReverseGeocodeDone()
 }
