@@ -242,7 +242,7 @@ func easyjson3e8ab7adDecodeGithubComHumansNetMapboxSdkGoMapbox2(in *jlexer.Lexer
 				in.Delim(']')
 			}
 		case "relevance":
-			out.Relevance = int(in.Int())
+			out.Relevance = float64(in.Float64())
 		case "properties":
 			(out.Properties).UnmarshalEasyJSON(in)
 		case "text":
@@ -365,7 +365,7 @@ func easyjson3e8ab7adEncodeGithubComHumansNetMapboxSdkGoMapbox2(out *jwriter.Wri
 	{
 		const prefix string = ",\"relevance\":"
 		out.RawString(prefix)
-		out.Int(int(in.Relevance))
+		out.Float64(float64(in.Relevance))
 	}
 	{
 		const prefix string = ",\"properties\":"

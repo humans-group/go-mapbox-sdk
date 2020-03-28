@@ -5,7 +5,7 @@ type (
 		ID          string     `json:"id"`
 		Type        string     `json:"type"`
 		PlaceType   []string   `json:"place_type"`
-		Relevance   int        `json:"relevance"`
+		Relevance   float64    `json:"relevance"`
 		Properties  Properties `json:"properties"`
 		Text        string     `json:"text"`
 		PlaceName   string     `json:"place_name"`
